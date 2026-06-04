@@ -2,8 +2,17 @@ import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export default async function SubjectDetailPage({ params }: { params: { slug: string } }) {
-  const subjectName = params.slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+export default async function SubjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
+  
+  if (!resolvedParams?.slug) {
+    notFound();
+  }
+
+  const subjectName = resolvedParams.slug
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
   
   const subject = await prisma.subject.findFirst({
     where: { 
@@ -15,7 +24,10 @@ export default async function SubjectDetailPage({ params }: { params: { slug: st
     include: {
       papers: {
         where: { status: 'PUBLISHED' },
-        orderBy: { year: 'desc' }
+        orderBy: { year: 'desc' },
+        include: {
+          subject: true
+        }
       }
     }
   });
@@ -42,13 +54,20 @@ export default async function SubjectDetailPage({ params }: { params: { slug: st
               <div className="p-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{paper.year} {paper.paperType}</h3>
-                    <p className="text-sm text-gray-500">{paper.paperCode}</p>
+                    <h3 className="text-lg font-bold text-gray-900">{paper.title}</h3>
+                    <p className="text-sm text-gray-500">{paper.subject.name} • {paper.year}</p>
+                    <p className="text-xs text-gray-400 mt-1">{paper.paperType}</p>
                   </div>
                   <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                     {paper.examBody}
                   </span>
                 </div>
+
+                {!paper.cloudinaryUrl && (
+                  <div className="mt-4 p-2 bg-amber-50 text-amber-700 text-xs rounded border border-amber-100 font-medium">
+                    PDF unavailable
+                  </div>
+                )}
                 
                 <div className="mt-6 flex gap-3">
                   <Link 
@@ -58,7 +77,8 @@ export default async function SubjectDetailPage({ params }: { params: { slug: st
                     Preview
                   </Link>
                   <button 
-                    className="flex-1 text-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                    disabled={!paper.cloudinaryUrl}
+                    className="flex-1 text-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:bg-gray-400"
                   >
                     Download
                   </button>
@@ -69,7 +89,6 @@ export default async function SubjectDetailPage({ params }: { params: { slug: st
         ) : (
           <div className="col-span-full py-12 text-center bg-white border border-dashed rounded-xl">
             <p className="text-gray-500">No papers found for this subject yet.</p>
-            {/* Admin hint if logged in */}
           </div>
         )}
       </div>

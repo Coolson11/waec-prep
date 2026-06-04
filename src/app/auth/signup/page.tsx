@@ -2,65 +2,109 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signUp } from "@/lib/actions/auth";
 
-export default function SignInPage() {
+export default function SignUpPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleCredentialsSignIn = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("email", email);
+    formData.append("password", password);
 
-    if (res?.error) {
-      setError("Invalid email or password");
+    const res = await signUp(formData);
+
+    if (res.error) {
+      setError(res.error);
       setLoading(false);
-    } else {
-      router.push(callbackUrl);
-      router.refresh();
+      return;
     }
+
+    setSuccess(true);
+    setLoading(false);
+    
+    // Redirect to sign in after 3 seconds
+    setTimeout(() => {
+      router.push("/auth/signin");
+    }, 3000);
   };
 
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl });
+    signIn("google", { callbackUrl: "/dashboard" });
   };
+
+  if (success) {
+    return (
+      <div className="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+          <div className="bg-green-50 text-green-800 p-6 rounded-lg border border-green-200 shadow-sm">
+            <h2 className="text-2xl font-bold mb-2">Account Created!</h2>
+            <p className="mb-4">Your account has been successfully created. You are being redirected to the sign-in page...</p>
+            <Link 
+              href="/auth/signin" 
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              Click here if you are not redirected automatically
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-          Sign in to your account
+          Create your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           Or{" "}
-          <Link href="/auth/signup" className="font-medium text-blue-600 hover:text-blue-500">
-            create a new account
+          <Link href="/auth/signin" className="font-medium text-blue-600 hover:text-blue-500">
+            sign in to your existing account
           </Link>
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100">
-          <form className="space-y-6" onSubmit={handleCredentialsSignIn} method="POST">
+          <form className="space-y-6" onSubmit={handleSignUp}>
             {error && (
               <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-100">
                 {error}
               </div>
             )}
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Full Name
+              </label>
+              <div className="mt-1">
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm text-black"
+                />
+              </div>
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
@@ -79,7 +123,7 @@ export default function SignInPage() {
             </div>
 
             <div>
-              <label htmlFor="password" title="Admin123" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" title="Min 6 characters" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
               <div className="mt-1">
@@ -101,7 +145,7 @@ export default function SignInPage() {
                 disabled={loading}
                 className="flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
               >
-                {loading ? "Signing in..." : "Sign in"}
+                {loading ? "Creating account..." : "Sign up"}
               </button>
             </div>
           </form>

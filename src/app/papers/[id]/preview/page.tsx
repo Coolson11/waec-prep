@@ -3,13 +3,14 @@ import { notFound, redirect } from "next/navigation";
 import { checkPreviewAccess, incrementPreviewCount } from "@/lib/actions/preview";
 import Link from "next/link";
 
-export default async function PaperPreviewPage({ params }: { params: { id: string } }) {
+export default async function PaperPreviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const paper = await prisma.paper.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: { subject: true }
   });
 
-  if (!paper) {
+  if (!paper || !paper.subject) {
     notFound();
   }
 

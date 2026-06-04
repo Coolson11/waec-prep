@@ -84,7 +84,7 @@ model Paper {
   year       Int
   paperType  String
   examBody   ExamBody    @default(WAEC)
-  fileUrl    String
+  cloudinaryUrl    String
   paperCode  String      @unique
   status     PaperStatus @default(DRAFT)
   uploaderId String

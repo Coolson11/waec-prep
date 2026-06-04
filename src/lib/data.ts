@@ -15,3 +15,13 @@ export async function getSubjects() {
     },
   });
 }
+
+export async function getAllPapers() {
+  return await prisma.paper.findMany({
+    where: { status: 'PUBLISHED' },
+    include: {
+      subject: true,
+    },
+    orderBy: { year: 'desc' },
+  });
+}

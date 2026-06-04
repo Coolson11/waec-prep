@@ -7,10 +7,19 @@ import { Role, PaperStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export async function uploadPaper(formData: FormData) {
-  const user = await getCurrentUser();
+  const sessionUser = await getCurrentUser();
+
+  if (!sessionUser || !sessionUser.id) {
+    throw new Error("You must be logged in to upload papers.");
+  }
+
+  // Verify user exists in DB and has permission
+  const user = await prisma.user.findUnique({
+    where: { id: sessionUser.id }
+  });
 
   if (!user || (user.role !== Role.ADMIN && user.role !== Role.SUPER_ADMIN)) {
-    throw new Error("Unauthorized");
+    throw new Error("Unauthorized: Only admins can upload papers.");
   }
 
   const title = formData.get("title") as string;
@@ -32,7 +41,12 @@ export async function uploadPaper(formData: FormData) {
 
   // Generate a paper code (e.g., MATH-2023-P1-1234)
   const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
-  const shortSubject = subject?.name.substring(0, 3).toUpperCase() || "SUBJ";
+
+  if (!subject) {
+    throw new Error("Invalid subject selected.");
+  }
+
+  const shortSubject = subject.name.substring(0, 3).toUpperCase();
   const randomSuffix = Math.floor(1000 + Math.random() * 9000);
   const paperCode = `${shortSubject}-${year}-${paperType.substring(0, 2).toUpperCase()}-${randomSuffix}`;
 
@@ -42,7 +56,7 @@ export async function uploadPaper(formData: FormData) {
       subjectId,
       year,
       paperType,
-      fileUrl: uploadResult.secure_url,
+      cloudinaryUrl: uploadResult.secure_url,
       paperCode,
       uploaderId: user.id,
       status: PaperStatus.PUBLISHED, // Auto-publishing for now as per MVP simplicity

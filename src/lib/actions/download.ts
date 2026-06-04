@@ -41,7 +41,7 @@ export async function handleDownload(paperId: string) {
   // Get paper file URL
   const paper = await prisma.paper.findUnique({
     where: { id: paperId },
-    select: { fileUrl: true }
+    select: { cloudinaryUrl: true }
   });
 
   if (!paper) {
@@ -49,5 +49,5 @@ export async function handleDownload(paperId: string) {
   }
 
   // For now, return the URL. In a real scenario, we might use a signed URL from Cloudinary.
-  return { url: paper.fileUrl };
+  return { url: paper.cloudinaryUrl };
 }
