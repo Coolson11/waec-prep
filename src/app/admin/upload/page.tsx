@@ -234,7 +234,7 @@ export default function AdminUploadPage() {
             <button 
               type="submit" 
               disabled={loading}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center px-10 py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 shadow-xl shadow-emerald-200 transition-all active:scale-95 disabled:opacity-50"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center px-6 sm:px-10 py-3.5 sm:py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-emerald-700 shadow-xl shadow-emerald-200 transition-all active:scale-95 disabled:opacity-50"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
