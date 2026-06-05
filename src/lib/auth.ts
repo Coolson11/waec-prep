@@ -50,17 +50,39 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        token.profileCompleted = (user as any).profileCompleted;
+        token.facultyId = (user as any).facultyId;
+      } else {
+        // Fetch latest data from DB if user is already logged in
+        // or if we want to ensure session is up to date
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { profileCompleted: true, facultyId: true, role: true }
+        });
+        if (dbUser) {
+          token.profileCompleted = dbUser.profileCompleted;
+          token.facultyId = dbUser.facultyId;
+          token.role = dbUser.role;
+        }
       }
+
+      if (trigger === "update" && session?.profileCompleted !== undefined) {
+        token.profileCompleted = session.profileCompleted;
+        token.facultyId = session.facultyId;
+      }
+
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
+        session.user.profileCompleted = token.profileCompleted as boolean;
+        session.user.facultyId = token.facultyId as string | null;
       }
       return session;
     },

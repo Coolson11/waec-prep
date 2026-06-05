@@ -6,7 +6,11 @@ export default async function DashboardPage() {
   const session = await getSession();
 
   if (!session) {
-    redirect("/api/auth/signin");
+    redirect("/auth/signin");
+  }
+
+  if (!session.user.profileCompleted) {
+    redirect("/complete-profile");
   }
 
   return (
