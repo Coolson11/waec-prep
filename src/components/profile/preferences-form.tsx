@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { getFaculties, getSubjectsByFaculty, updatePreferences, getUserPreferences } from "@/lib/actions/onboarding";
 import { Faculty, Subject } from "@prisma/client";
-import { Loader2, Check, Save } from "lucide-react";
+import { Loader2, Check, Save, GraduationCap, BookOpen, Layers } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 
 export default function ProfilePreferences() {
@@ -91,99 +92,154 @@ export default function ProfilePreferences() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <Loader2 className="h-10 w-10 text-indigo-600 animate-spin" />
+        <p className="text-slate-500 font-bold animate-pulse uppercase tracking-widest text-xs">Loading Preferences</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900">Study Preferences</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Update your faculty and selected subjects.
-        </p>
+    <div className="space-y-10">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <GraduationCap className="h-7 w-7 text-indigo-600" />
+            Study Preferences
+          </h3>
+          <p className="mt-1 text-slate-500 font-medium">
+            Fine-tune your focus areas for personalized recommendations.
+          </p>
+        </div>
+        <div className="hidden sm:block">
+          <span className="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-widest">
+            {selectedSubjects.length} Subjects Selected
+          </span>
+        </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-10">
         {/* Faculty Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Your Faculty
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Layers className="h-5 w-5 text-indigo-600" />
+            <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">Target Faculty</h4>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {faculties.map((f) => (
               <button
                 key={f.id}
                 onClick={() => handleFacultyChange(f.id)}
                 className={clsx(
-                  "px-4 py-3 border rounded-lg text-sm font-medium transition-all",
+                  "relative group px-6 py-4 border rounded-[1.5rem] text-sm font-bold transition-all overflow-hidden",
                   selectedFaculty === f.id
-                    ? "border-blue-600 bg-blue-50 text-blue-700 shadow-sm"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                    ? "border-indigo-600 bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                    : "border-slate-100 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/30"
                 )}
               >
-                {f.name}
+                <span className="relative z-10">{f.name}</span>
+                {selectedFaculty === f.id && (
+                  <motion.div 
+                    layoutId="faculty-glow"
+                    className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-violet-600"
+                  />
+                )}
               </button>
             ))}
           </div>
-        </div>
+        </section>
 
         {/* Subject Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Selected Subjects
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {subjects.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => toggleSubject(s.id)}
-                className={clsx(
-                  "flex items-center justify-between px-4 py-2 border rounded-md text-sm transition-all",
-                  selectedSubjects.includes(s.id)
-                    ? "border-blue-600 bg-blue-50 text-blue-700"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
-                )}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <BookOpen className="h-5 w-5 text-indigo-600" />
+            <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">Core Subjects</h4>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <AnimatePresence mode="popLayout">
+              {subjects.map((s) => (
+                <motion.button
+                  key={s.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  onClick={() => toggleSubject(s.id)}
+                  className={clsx(
+                    "flex items-center justify-between px-5 py-4 border rounded-2xl text-sm font-bold transition-all group hover-card",
+                    selectedSubjects.includes(s.id)
+                      ? "border-indigo-600 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500/10"
+                      : "border-slate-100 bg-white text-slate-600 hover:border-indigo-200"
+                  )}
+                >
+                  <span className="flex items-center gap-3">
+                    <div className={clsx(
+                      "w-2 h-2 rounded-full transition-all",
+                      selectedSubjects.includes(s.id) ? "bg-indigo-600 scale-125" : "bg-slate-200"
+                    )} />
+                    {s.name}
+                  </span>
+                  {selectedSubjects.includes(s.id) && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                    >
+                      <Check className="h-4 w-4 text-indigo-600" />
+                    </motion.div>
+                  )}
+                </motion.button>
+              ))}
+            </AnimatePresence>
+          </div>
+        </section>
+
+        <div className="pt-6">
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl text-sm font-bold"
               >
-                <span>{s.name}</span>
-                {selectedSubjects.includes(s.id) && <Check className="h-3 w-3" />}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-100 text-red-600 rounded-md text-sm">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="p-3 bg-green-50 border border-green-100 text-green-600 rounded-md text-sm">
-            Preferences updated successfully!
-          </div>
-        )}
-
-        <div className="pt-4 border-t flex justify-end">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
-              </>
+                {error}
+              </motion.div>
             )}
-          </button>
+            {success && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-6 p-4 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-2xl text-sm font-bold flex items-center gap-2"
+              >
+                <Check className="h-4 w-4" />
+                Your study preferences have been updated successfully!
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="flex items-center justify-between gap-4 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+            <p className="text-xs font-bold text-slate-400 max-w-xs">
+              Updating your preferences will refine your dashboard recommendations and available study materials.
+            </p>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center px-8 py-3.5 bg-indigo-600 text-white rounded-2xl text-sm font-black hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95 disabled:opacity-50"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

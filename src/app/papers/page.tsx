@@ -2,6 +2,22 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  FileText, 
+  Search, 
+  Download, 
+  Eye, 
+  AlertCircle, 
+  Loader2, 
+  Filter, 
+  RefreshCcw,
+  BookOpen,
+  Calendar,
+  Layers,
+  Archive
+} from "lucide-react";
+import { clsx } from "clsx";
 
 interface Paper {
   id: string;
@@ -18,6 +34,7 @@ export default function PapersPage() {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     async function fetchPapers() {
@@ -38,11 +55,17 @@ export default function PapersPage() {
     fetchPapers();
   }, []);
 
+  const filteredPapers = papers.filter(paper => 
+    paper.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    paper.subject.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    paper.paperCode.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="mt-4 text-lg text-gray-600">Loading past papers...</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center space-y-4">
+        <Loader2 className="h-12 w-12 text-indigo-600 animate-spin" />
+        <p className="text-slate-500 font-black uppercase tracking-[0.2em] text-xs">Curating Archive</p>
       </div>
     );
   }
@@ -50,97 +73,146 @@ export default function PapersPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
-        <div className="bg-red-50 text-red-600 p-8 rounded-xl border border-red-100 max-w-md">
-          <h2 className="text-2xl font-bold mb-2">Oops!</h2>
-          <p className="mb-6">{error}</p>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-2xl shadow-rose-500/5 max-w-md"
+        >
+          <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="h-10 w-10 text-rose-500" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">Access Error</h2>
+          <p className="text-slate-500 font-medium mb-8 leading-relaxed">{error}</p>
           <button 
             onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95"
           >
-            Try Again
+            <RefreshCcw className="h-4 w-4" /> Try Again
           </button>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900">Past Papers Archive</h1>
-          <p className="mt-2 text-gray-600 text-lg">Browse through our collection of WAEC past papers.</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+      {/* Header & Search */}
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+        <div className="space-y-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100">
+            <Archive className="h-3 w-3" />
+            Central Archive
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">Past Papers</h1>
+          <p className="text-slate-500 font-medium text-lg max-w-xl">
+            Complete your preparation with verified questions from previous years.
+          </p>
         </div>
-        <div className="text-sm font-medium text-gray-500 bg-gray-100 px-4 py-2 rounded-lg">
-          Total Papers: {papers.length}
+        
+        <div className="relative w-full lg:max-w-md group">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+          </div>
+          <input 
+            type="text" 
+            placeholder="Search papers by subject or year..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="block w-full pl-12 pr-4 py-4 bg-white border border-slate-100 rounded-[1.5rem] shadow-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium"
+          />
         </div>
       </div>
       
-      <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {papers.length > 0 ? (
-          papers.map((paper) => (
-            <div key={paper.id} className="bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
-              <div className="p-6 flex-1">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 pr-4">
-                    <h3 className="text-lg font-bold text-gray-900 line-clamp-2">{paper.title}</h3>
-                    <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-sm text-gray-500">
-                      <span>{paper.subject.name}</span>
-                      <span>•</span>
-                      <span>{paper.year}</span>
+      {/* Papers Grid */}
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <AnimatePresence mode="popLayout">
+          {filteredPapers.length > 0 ? (
+            filteredPapers.map((paper, index) => (
+              <motion.div 
+                key={paper.id}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover-card flex flex-col group overflow-hidden"
+              >
+                <div className="p-8 flex-1 space-y-6">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-widest">
+                        {paper.examBody}
+                      </span>
                     </div>
-                    <p className="text-xs text-gray-400 mt-2 font-medium uppercase tracking-wider">{paper.paperType}</p>
+                    <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full">
+                      <Calendar className="h-3 w-3" />
+                      {paper.year}
+                    </div>
                   </div>
-                  <span className="shrink-0 inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                    {paper.examBody}
-                  </span>
-                </div>
 
-                {!paper.cloudinaryUrl && (
-                  <div className="mt-4 p-2 bg-amber-50 text-amber-700 text-xs rounded border border-amber-100 font-semibold flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    PDF unavailable
+                  <div className="space-y-3">
+                    <h3 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight line-clamp-2 min-h-[3.5rem]">
+                      {paper.title}
+                    </h3>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                        <BookOpen className="h-3.5 w-3.5 text-indigo-500" />
+                        {paper.subject.name}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                        <Layers className="h-3.5 w-3.5 text-indigo-500" />
+                        {paper.paperType}
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-              
-              <div className="px-6 pb-6 mt-auto">
-                <div className="flex gap-3">
-                  <Link 
-                    href={`/papers/${paper.id}/preview`}
-                    className="flex-1 text-center px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-                  >
-                    Preview
-                  </Link>
-                  <button 
-                    disabled={!paper.cloudinaryUrl}
-                    className="flex-1 text-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                  >
-                    Download
-                  </button>
+
+                  {!paper.cloudinaryUrl && (
+                    <div className="p-3 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-widest rounded-xl border border-amber-100 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
+                      Digital Copy Pending
+                    </div>
+                  )}
                 </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="col-span-full py-20 text-center bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl">
-            <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-gray-900">No Papers Found</h3>
-            <p className="mt-2 text-gray-500 max-w-xs mx-auto">We couldn't find any past papers in the archive. Check back later or try a different search.</p>
-            <Link 
-              href="/subjects" 
-              className="mt-6 inline-block text-blue-600 font-semibold hover:underline"
+                
+                <div className="px-8 pb-8 pt-2">
+                  <div className="flex gap-3">
+                    <Link 
+                      href={`/papers/${paper.id}/preview`}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 text-xs font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 rounded-2xl hover:bg-indigo-100 transition-all group-hover:shadow-md"
+                    >
+                      <Eye className="h-4 w-4" /> Preview
+                    </Link>
+                    <button 
+                      disabled={!paper.cloudinaryUrl}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 text-xs font-black uppercase tracking-widest text-white bg-indigo-600 rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all disabled:opacity-50 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none active:scale-95"
+                    >
+                      <Download className="h-4 w-4" /> Get PDF
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="col-span-full py-24 text-center bg-slate-50 border-4 border-dashed border-slate-200 rounded-[3rem]"
             >
-              Browse by Subject instead
-            </Link>
-          </div>
-        )}
+              <div className="mx-auto w-24 h-24 bg-white rounded-[2rem] shadow-sm flex items-center justify-center text-slate-300 mb-6">
+                <Search className="h-10 w-10" />
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight">No Results Found</h3>
+              <p className="mt-2 text-slate-500 font-medium max-w-sm mx-auto leading-relaxed px-6">
+                We couldn&apos;t find any papers matching &ldquo;{searchQuery}&rdquo;. Try using different keywords or exploring by subject.
+              </p>
+              <button 
+                onClick={() => setSearchQuery("")}
+                className="mt-8 inline-flex items-center gap-2 text-indigo-600 font-black text-xs uppercase tracking-[0.2em] hover:gap-4 transition-all"
+              >
+                Clear Search <RefreshCcw className="h-3.5 w-3.5" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BookOpen, Calendar, Layers, Archive, ArrowLeft, Eye, Download, Sparkles, AlertCircle } from "lucide-react";
 
 export default async function SubjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
@@ -37,58 +38,105 @@ export default async function SubjectDetailPage({ params }: { params: Promise<{ 
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center gap-4 text-sm text-gray-500">
-        <Link href="/subjects" className="hover:text-blue-600 transition-colors">Subjects</Link>
-        <span>/</span>
-        <span className="text-gray-900 font-medium">{subject.name}</span>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+      {/* Breadcrumbs & Header */}
+      <div className="space-y-6">
+        <Link 
+          href="/subjects" 
+          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors group"
+        >
+          <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform" /> Back to Subjects
+        </Link>
+        
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100">
+              <BookOpen className="h-3.5 w-3.5" />
+              Subject Hub
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">{subject.name}</h1>
+            <p className="text-slate-500 font-medium text-lg max-w-xl">
+              Access and study verified {subject.name} past papers from previous years.
+            </p>
+          </div>
+          
+          <div className="bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Code</p>
+              <p className="text-sm font-black text-slate-900 mt-1">{subject.code}</p>
+            </div>
+            <div className="h-8 w-px bg-slate-100" />
+            <div className="text-right">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Total Papers</p>
+              <p className="text-sm font-black text-slate-900 mt-1">{subject.papers.length}</p>
+            </div>
+          </div>
+        </div>
       </div>
       
-      <h1 className="mt-4 text-4xl font-bold">{subject.name} Past Papers</h1>
-      <p className="mt-2 text-gray-600">Access and study {subject.name} papers from previous years.</p>
-      
-      <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Papers Grid */}
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {subject.papers.length > 0 ? (
           subject.papers.map((paper) => (
-            <div key={paper.id} className="bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <div className="p-6">
+            <div key={paper.id} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover-card flex flex-col group overflow-hidden">
+              <div className="p-8 flex-1 space-y-6">
                 <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">{paper.title}</h3>
-                    <p className="text-sm text-gray-500">{paper.subject.name} • {paper.year}</p>
-                    <p className="text-xs text-gray-400 mt-1">{paper.paperType}</p>
-                  </div>
-                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-widest">
                     {paper.examBody}
                   </span>
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full">
+                    <Calendar className="h-3 w-3" />
+                    {paper.year}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight line-clamp-2 min-h-[3.5rem]">
+                    {paper.title}
+                  </h3>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                      <Layers className="h-3.5 w-3.5 text-indigo-500" />
+                      {paper.paperType}
+                    </div>
+                  </div>
                 </div>
 
                 {!paper.cloudinaryUrl && (
-                  <div className="mt-4 p-2 bg-amber-50 text-amber-700 text-xs rounded border border-amber-100 font-medium">
-                    PDF unavailable
+                  <div className="p-3 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-widest rounded-xl border border-amber-100 flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    Digital Copy Pending
                   </div>
                 )}
-                
-                <div className="mt-6 flex gap-3">
+              </div>
+              
+              <div className="px-8 pb-8 pt-2">
+                <div className="flex gap-3">
                   <Link 
                     href={`/papers/${paper.id}/preview`}
-                    className="flex-1 text-center px-4 py-2 text-sm font-medium text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 text-xs font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 rounded-2xl hover:bg-indigo-100 transition-all group-hover:shadow-md"
                   >
-                    Preview
+                    <Eye className="h-4 w-4" /> Preview
                   </Link>
                   <button 
                     disabled={!paper.cloudinaryUrl}
-                    className="flex-1 text-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:bg-gray-400"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 text-xs font-black uppercase tracking-widest text-white bg-indigo-600 rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all disabled:opacity-50 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none active:scale-95"
                   >
-                    Download
+                    <Download className="h-4 w-4" /> Get PDF
                   </button>
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <div className="col-span-full py-12 text-center bg-white border border-dashed rounded-xl">
-            <p className="text-gray-500">No papers found for this subject yet.</p>
+          <div className="col-span-full py-24 text-center bg-slate-50 border-4 border-dashed border-slate-200 rounded-[3rem]">
+            <div className="mx-auto w-24 h-24 bg-white rounded-[2rem] shadow-sm flex items-center justify-center text-slate-300 mb-6">
+              <Archive className="h-10 w-10" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Empty Archive</h3>
+            <p className="mt-2 text-slate-500 font-medium max-w-sm mx-auto leading-relaxed px-6">
+              We haven&apos;t added any papers for {subject.name} yet. Check back soon or request a paper through our support.
+            </p>
           </div>
         )}
       </div>

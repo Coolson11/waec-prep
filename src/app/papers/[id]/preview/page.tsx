@@ -3,6 +3,21 @@ import { notFound, redirect } from "next/navigation";
 import { checkPreviewAccess } from "@/lib/actions/preview";
 import Link from "next/link";
 import { PreviewTracker } from "@/components/providers/preview-tracker";
+import { 
+  ArrowLeft, 
+  Lock, 
+  ChevronRight, 
+  Download, 
+  Maximize, 
+  BookOpen, 
+  Calendar, 
+  Layers, 
+  ShieldCheck,
+  Star,
+  Zap,
+  Info
+} from "lucide-react";
+import { clsx } from "clsx";
 
 export default async function PaperPreviewPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -20,39 +35,40 @@ export default async function PaperPreviewPage({ params }: { params: Promise<{ i
   // If blocked, show the "Limit Reached" UI
   if (access.mode === "blocked") {
     return (
-      <div className="p-6 max-w-5xl mx-auto min-h-[70vh] flex items-center justify-center">
-        <div className="bg-white p-10 border rounded-2xl shadow-xl max-w-md text-center">
-          <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m4-6a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-indigo-50 via-slate-50 to-white">
+        <div className="bg-white/80 backdrop-blur-xl p-12 rounded-[3rem] border border-white shadow-2xl shadow-indigo-500/10 max-w-lg text-center space-y-8">
+          <div className="w-24 h-24 bg-amber-50 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm">
+            <Lock className="h-10 w-10 text-amber-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Preview Limit Reached</h2>
-          <p className="mt-4 text-gray-600">
-            You've used all {access.count} of your free guest previews. 
-            Sign in or create an account to get more access.
-          </p>
-          <div className="mt-8 flex flex-col gap-3">
+          <div className="space-y-3">
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Access Locked</h2>
+            <p className="text-slate-500 font-medium text-lg leading-relaxed">
+              You&apos;ve used all <span className="text-indigo-600 font-black">{access.count}</span> free guest previews. 
+              Join thousands of students getting full access every day.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-4">
             <Link 
               href="/auth/signup" 
-              className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors"
+              className="group flex items-center justify-center gap-3 px-8 py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all active:scale-[0.98]"
             >
-              Create Free Account
+              Create Free Account <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link 
               href="/auth/signin" 
-              className="w-full py-3 text-blue-600 font-bold border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+              className="px-8 py-5 bg-white text-indigo-600 rounded-[1.5rem] font-black text-sm uppercase tracking-widest border-2 border-indigo-50 hover:bg-indigo-50 transition-all"
             >
-              Sign In
+              Existing Member? Sign In
             </Link>
           </div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Unlimited access starts here</p>
         </div>
       </div>
     );
   }
 
   // URL Logic:
-  const rawUrl = paper.cloudinaryUrl;
+  const rawUrl = paper.cloudinaryUrl || "";
   let isImagePreview = false;
   let displayUrl = "";
 
@@ -60,64 +76,90 @@ export default async function PaperPreviewPage({ params }: { params: Promise<{ i
 
   if (access.mode === "first-page-only") {
     if (isRawResource) {
-      // If it's a raw resource, we can't do image transformations
-      // Fallback: Show the PDF but maybe with some message or just the iframe
-      // For now, let's just show the PDF in iframe but it's not ideal for "first-page-only"
-      // Alternatively, we keep isImagePreview = false and just show the PDF.
       isImagePreview = false;
       displayUrl = rawUrl;
     } else {
-      // For guests, show high-quality JPG preview (Guaranteed to work for 'image' resources)
       isImagePreview = true;
       displayUrl = rawUrl.replace("/upload/", "/upload/f_jpg,pg_1,w_1200,c_limit,q_auto:best/").replace(".pdf", ".jpg");
     }
   } else {
-    // For authenticated users, use direct URL with PDF parameters
     displayUrl = rawUrl;
-    
-    // Ensure we don't have double #
     const baseUrl = displayUrl.split('#')[0];
     displayUrl = `${baseUrl}#toolbar=0&navpanes=0&scrollbar=1`;
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
       <PreviewTracker />
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4 text-sm text-gray-500">
-          <Link href="/subjects" className="hover:text-blue-600 transition-colors">Subjects</Link>
-          <span>/</span>
-          <Link href={`/subjects/${paper.subject.name.toLowerCase().replace(/\s+/g, '-')}`} className="hover:text-blue-600 transition-colors">
-            {paper.subject.name}
+      
+      {/* Header & Breadcrumbs */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="space-y-4">
+          <Link 
+            href={`/subjects/${paper.subject.name.toLowerCase().replace(/\s+/g, '-')}`}
+            className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors group"
+          >
+            <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform" /> Back to {paper.subject.name}
           </Link>
-          <span>/</span>
-          <span className="text-gray-900 font-medium">{paper.year} Preview</span>
+          <div className="flex items-center gap-4">
+             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100 text-indigo-600 shrink-0">
+                <BookOpen className="h-6 w-6" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">{paper.title}</h1>
+                <div className="flex flex-wrap items-center gap-3 mt-1">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-black bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-100 uppercase tracking-widest">
+                    <Calendar className="h-3 w-3" /> {paper.year} Edition
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-black bg-slate-50 text-slate-500 px-2.5 py-1 rounded-full border border-slate-100 uppercase tracking-widest">
+                    <Layers className="h-3 w-3" /> {paper.paperType}
+                  </span>
+                </div>
+              </div>
+          </div>
         </div>
-        
+
         {access.mode === "first-page-only" && (
-          <span className="text-xs font-semibold text-orange-700 bg-orange-100 px-3 py-1 rounded-full border border-orange-200 shadow-sm">
-            Guest Preview: {access.count}/5 Used
-          </span>
+          <div className="flex items-center gap-4 px-6 py-4 bg-amber-50 rounded-3xl border border-amber-100">
+            <div className="space-y-1">
+              <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Guest Access Mode</p>
+              <p className="text-sm font-bold text-amber-900 leading-none">{access.count}/5 Previews Used</p>
+            </div>
+            <div className="w-px h-8 bg-amber-200" />
+            <Link href="/auth/signup" className="text-xs font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-700">
+              Upgrade Now
+            </Link>
+          </div>
         )}
       </div>
 
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Viewer Area */}
-        <div className="lg:col-span-3">
-          <div className="bg-gray-900 rounded-xl shadow-2xl overflow-hidden border-4 border-gray-800 min-h-[600px] lg:h-[850px] relative flex items-center justify-center">
+        <div className="lg:col-span-3 space-y-6">
+          <div className="bg-slate-900 rounded-[3rem] shadow-2xl overflow-hidden border-[12px] border-slate-800 h-[600px] lg:h-[900px] relative flex items-center justify-center">
             {isImagePreview ? (
-              <div className="w-full h-full overflow-y-auto bg-gray-100 p-4 custom-scrollbar">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div className="w-full h-full overflow-y-auto bg-slate-100 p-8 custom-scrollbar">
                 <img 
                   src={displayUrl} 
-                  alt={`${paper.title} - First Page`} 
+                  alt={`${paper.title} - First Page Preview`} 
                   className="w-full max-w-3xl mx-auto shadow-2xl rounded-sm"
                 />
-                <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-gray-900 via-gray-900/90 to-transparent flex flex-col items-center justify-end pb-10">
-                  <p className="text-white font-bold text-xl mb-4 tracking-tight">Want to unlock the full paper?</p>
-                  <Link href="/auth/signin" className="px-8 py-3 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transform hover:scale-105 transition-all shadow-lg">
-                    Sign In for Full Access
-                  </Link>
+                <div className="absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-slate-900 via-slate-900/95 to-transparent flex flex-col items-center justify-end pb-16 px-6 text-center">
+                  <div className="bg-indigo-600 p-3 rounded-2xl mb-6 shadow-lg shadow-indigo-500/20">
+                    <Lock className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-white font-black text-2xl mb-3 tracking-tight">Full Paper is Locked</h3>
+                  <p className="text-slate-400 font-medium mb-8 max-w-md">
+                    Join our learning community to access all pages, detailed solutions, and high-quality PDF downloads.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
+                    <Link href="/auth/signup" className="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg active:scale-95">
+                      Get Full Access
+                    </Link>
+                    <Link href="/auth/signin" className="flex-1 px-8 py-4 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-white/20 transition-all active:scale-95">
+                      Sign In
+                    </Link>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -127,84 +169,102 @@ export default async function PaperPreviewPage({ params }: { params: Promise<{ i
                   className="w-full h-full border-none"
                   title={paper.title}
                 />
-                <div className="absolute top-4 right-4 flex gap-2">
+                <div className="absolute top-6 right-6 flex gap-3">
                    <a 
                     href={rawUrl} 
                     download={`${paper.title}.pdf`}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-5 rounded-lg shadow-xl transition-all flex items-center gap-2 hover:scale-105 active:scale-95"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest px-6 py-3.5 rounded-2xl shadow-2xl transition-all flex items-center gap-2 hover:scale-105 active:scale-95"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Download PDF
+                    <Download className="h-4 w-4" /> Download PDF
                   </a>
                    <a 
                     href={rawUrl} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow-xl transition-all flex items-center gap-2 hover:scale-105 active:scale-95"
+                    className="bg-slate-900/80 backdrop-blur-md hover:bg-slate-900 text-white p-3.5 rounded-2xl shadow-2xl transition-all flex items-center justify-center hover:scale-105 active:scale-95 border border-white/10"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
+                    <Maximize className="h-4 w-4" />
                   </a>
                 </div>
               </div>
             )}
           </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 flex items-start gap-4">
+            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
+              <Info className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900">Study Tip</p>
+              <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                Take this paper under timed conditions to simulate the real exam environment. Focus on the most frequent topics first.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white p-6 border rounded-xl shadow-sm">
-            <h1 className="text-xl font-bold text-gray-900 leading-tight">{paper.title}</h1>
-            <div className="mt-6 space-y-4">
-              <div className="flex justify-between items-center text-sm border-b pb-2">
-                <span className="text-gray-500">Subject</span>
-                <span className="font-semibold text-gray-900">{paper.subject.name}</span>
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Examination Details</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-4 border-b border-slate-50">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Exam Body</span>
+                <span className="text-sm font-black text-slate-900">{paper.examBody}</span>
               </div>
-              <div className="flex justify-between items-center text-sm border-b pb-2">
-                <span className="text-gray-500">Year</span>
-                <span className="font-semibold text-gray-900">{paper.year}</span>
+              <div className="flex justify-between items-center py-4 border-b border-slate-50">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Subject</span>
+                <span className="text-sm font-black text-slate-900">{paper.subject.name}</span>
               </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500">Type</span>
-                <span className="font-semibold text-blue-600 uppercase text-xs tracking-wider px-2 py-0.5 bg-blue-50 rounded-md">
-                  {paper.paperType}
+              <div className="flex justify-between items-center py-4 border-b border-slate-50">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Year</span>
+                <span className="text-sm font-black text-slate-900">{paper.year} Edition</span>
+              </div>
+              <div className="flex justify-between items-center py-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Status</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2.5 py-1 rounded-full">
+                  <ShieldCheck className="h-3 w-3" /> Verified
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="bg-blue-50 p-6 border border-blue-100 rounded-xl shadow-sm">
-            <h3 className="font-bold text-blue-900">
-              {access.mode === "full" ? "Study with Confidence" : "Unlock Full Access"}
-            </h3>
-            <p className="mt-2 text-sm text-blue-700 leading-relaxed">
-              {access.mode === "full" 
-                ? "You have full access to this paper. Premium members get unlimited downloads and detailed solutions."
-                : "Guests can only view the first page. Sign in to see all questions and solutions."}
-            </p>
-            
-            <div className="mt-6 space-y-3">
-              {access.mode === "full" ? (
-                <button className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all shadow-md">
-                  Download Full PDF
-                </button>
-              ) : (
-                <Link 
-                  href="/auth/signin"
-                  className="block w-full text-center py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all shadow-md"
-                >
-                  Sign In for Full PDF
-                </Link>
-              )}
-              <Link 
-                href="/pricing"
-                className="block w-full text-center py-2.5 text-blue-600 font-bold border border-blue-600 rounded-lg hover:bg-blue-50 transition-all"
-              >
-                View Premium Plans
-              </Link>
+          <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-indigo-200 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+              <Star className="w-24 h-24" />
+            </div>
+            <div className="relative space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest">
+                <Zap className="h-3 w-3 fill-current" /> Premium Feature
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-xl font-black tracking-tight leading-tight">
+                  {access.mode === "full" ? "Maximize Learning" : "Unlock the Full Document"}
+                </h3>
+                <p className="text-indigo-100 text-sm font-medium leading-relaxed">
+                  {access.mode === "full" 
+                    ? "Get step-by-step video solutions and expert breakdowns for every question in this paper."
+                    : "Experience the platform with no limits. High-speed downloads, printing access, and ad-free study."}
+                </p>
+              </div>
+              
+              <div className="pt-2">
+                {access.mode === "full" ? (
+                  <Link 
+                    href="/pricing"
+                    className="block w-full text-center py-4 bg-white text-indigo-600 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-indigo-50 transition-all shadow-xl active:scale-[0.98]"
+                  >
+                    Explore Solutions
+                  </Link>
+                ) : (
+                  <Link 
+                    href="/auth/signup"
+                    className="block w-full text-center py-4 bg-white text-indigo-600 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-indigo-50 transition-all shadow-xl active:scale-[0.98]"
+                  >
+                    Go Premium Free
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>
