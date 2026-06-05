@@ -2,6 +2,7 @@
 
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import NextImage from "next/image";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { LogOut, User, BookOpen, FileText, LayoutDashboard, Menu, X } from "lucide-react";
@@ -28,11 +29,18 @@ export function Navbar() {
         <div className="flex justify-between h-16 items-center">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2 group">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center group-hover:rotate-6 transition-transform">
-                <BookOpen className="h-5 w-5 text-white" />
+            <Link href="/" className="flex items-center group">
+              <div className="relative w-10 h-10 mr-2">
+                <NextImage 
+                  src="/waeclogo.png"
+                  alt="WAEC Prep Logo"
+                  width={40}
+                  height={40}
+                  className="object-contain"
+                  priority
+                />
               </div>
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 hidden sm:block">
                 WAEC Prep
               </span>
             </Link>
