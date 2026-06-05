@@ -78,22 +78,22 @@ model Subject {
 }
 
 model Paper {
-  id         String      @id @default(cuid())
-  title      String
-  subjectId  String
-  year       Int
-  paperType  String
-  examBody   ExamBody    @default(WAEC)
-  cloudinaryUrl    String
-  paperCode  String      @unique
-  status     PaperStatus @default(DRAFT)
-  uploaderId String
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  downloads  Download[]
-  subject    Subject     @relation(fields: [subjectId], references: [id])
-  uploader   User        @relation("AdminUploads", fields: [uploaderId], references: [id])
-  views      View[]
+  id            String      @id @default(cuid())
+  title         String
+  subjectId     String
+  year          Int
+  paperType     String
+  examBody      ExamBody    @default(WAEC)
+  cloudinaryUrl String
+  paperCode     String      @unique
+  status        PaperStatus @default(DRAFT)
+  uploaderId    String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  downloads     Download[]
+  subject       Subject     @relation(fields: [subjectId], references: [id])
+  uploader      User        @relation("AdminUploads", fields: [uploaderId], references: [id])
+  views         View[]
 
   @@index([subjectId, year])
   @@index([status])
