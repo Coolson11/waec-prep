@@ -30,7 +30,7 @@ export async function uploadToCloudinary(file: string, folder: string = "waec-pr
   try {
     const result = await cloudinary.uploader.upload(file, {
       folder: folder,
-      resource_type: "raw",
+      resource_type: "auto",
       type: "upload",
       access_mode: "public",
       // If the user has an upload preset they want to use for server-side uploads:

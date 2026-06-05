@@ -59,14 +59,19 @@ export const authOptions: NextAuthOptions = {
       } else {
         // Fetch latest data from DB if user is already logged in
         // or if we want to ensure session is up to date
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { profileCompleted: true, facultyId: true, role: true }
-        });
-        if (dbUser) {
-          token.profileCompleted = dbUser.profileCompleted;
-          token.facultyId = dbUser.facultyId;
-          token.role = dbUser.role;
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { profileCompleted: true, facultyId: true, role: true }
+          });
+          if (dbUser) {
+            token.profileCompleted = dbUser.profileCompleted;
+            token.facultyId = dbUser.facultyId;
+            token.role = dbUser.role;
+          }
+        } catch (error) {
+          console.error("JWT Callback DB Error:", error);
+          // If DB fails, we proceed with existing token data instead of crashing
         }
       }
 

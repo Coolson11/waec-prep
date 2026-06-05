@@ -39,6 +39,11 @@ export async function uploadPaper(formData: FormData) {
 
   const uploadResult = await uploadToCloudinary(fileBase64);
 
+  // Validate the result
+  if (!uploadResult.secure_url || !uploadResult.secure_url.startsWith("https://")) {
+    throw new Error("Invalid URL returned from Cloudinary upload.");
+  }
+
   // Generate a paper code (e.g., MATH-2023-P1-1234)
   const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
 

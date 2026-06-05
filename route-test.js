@@ -1,0 +1,1 @@
+const url = 'https://res.cloudinary.com/dpcrwuql4/raw/upload/v1780693845/waec-prep/d4zmsxkdyudtr6jli7yk'; const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)); async function test() { try { const response = await fetch(url); console.log('Status:', response.status); } catch (e) { console.error('Error:', e); } } test();

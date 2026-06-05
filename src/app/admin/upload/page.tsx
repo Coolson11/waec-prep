@@ -15,7 +15,8 @@ import {
   AlertCircle, 
   Loader2, 
   X,
-  Plus
+  Plus,
+  ArrowRight
 } from "lucide-react";
 import { clsx } from "clsx";
 

@@ -1,23 +1,37 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import NextImage from "next/image";
 import { motion } from "framer-motion";
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Role } from "@prisma/client";
 
 export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const { data: session } = useSession();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (session) {
+      const role = (session.user as any)?.role;
+      if (role === Role.SUPER_ADMIN) {
+        router.push("/super-admin");
+      } else if (role === Role.ADMIN) {
+        router.push("/admin/upload");
+      } else {
+        router.push("/dashboard");
+      }
+    }
+  }, [session, router]);
 
   const handleCredentialsSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,13 +48,12 @@ export default function SignInPage() {
       setError("Invalid email or password");
       setLoading(false);
     } else {
-      router.push(callbackUrl);
-      router.refresh();
+      // Session will be updated and useEffect will handle redirection
     }
   };
 
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl });
+    signIn("google");
   };
 
   return (

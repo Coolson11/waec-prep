@@ -1,7 +1,9 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
+  // Seeding Faculties and Subjects
   const faculties = [
     {
       name: 'Science',
@@ -52,6 +54,40 @@ async function main() {
       subjectCount++;
     }
   }
+
+  // Seeding Super Admin and Admin
+  const seedUsers = async () => {
+    const users = [
+      {
+        email: process.env.SUPER_ADMIN_EMAIL,
+        password: process.env.SUPER_ADMIN_PASSWORD,
+        role: 'SUPER_ADMIN',
+        name: 'Super Admin'
+      },
+      {
+        email: process.env.ADMIN_EMAIL,
+        password: process.env.ADMIN_PASSWORD,
+        role: 'ADMIN',
+        name: 'Admin User'
+      }
+    ];
+
+    for (const user of users) {
+      if (!user.email || !user.password) {
+        console.warn(`Skipping user seeding for ${user.role} due to missing credentials.`);
+        continue;
+      }
+      const hashedPassword = await bcrypt.hash(user.password, 10);
+      await prisma.user.upsert({
+        where: { email: user.email },
+        update: { password: hashedPassword, role: user.role, name: user.name },
+        create: { email: user.email, password: hashedPassword, role: user.role, name: user.name },
+      });
+      console.log(`Seeded user: ${user.email} as ${user.role}`);
+    }
+  };
+
+  await seedUsers();
 
   console.log('Seed data created successfully');
 }

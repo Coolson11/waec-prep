@@ -39,14 +39,16 @@ export async function GET(
     }
 
     const blob = await response.blob();
-    
+
     return new NextResponse(blob, {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `inline; filename="${paper.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf"`,
+        "Content-Length": blob.size.toString(),
         "Cache-Control": "public, max-age=3600"
       },
     });
+
   } catch (error: any) {
     console.error("[PDF Proxy] Fatal Error:", error.message || error);
     return new NextResponse(`Internal Server Error: ${error.message || "Unknown error"}`, { status: 500 });

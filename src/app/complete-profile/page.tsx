@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { getFaculties, getSubjectsByFaculty, completeProfile } from "@/lib/actions/onboarding";
-import { Faculty, Subject } from "@prisma/client";
+import { Faculty, Subject, Role } from "@prisma/client";
 import { Loader2, Check, ChevronRight, ChevronLeft, GraduationCap, Sparkles, BookOpen, Layers } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
@@ -20,6 +20,15 @@ export default function CompleteProfilePage() {
   const [selectedFaculty, setSelectedFaculty] = useState<string | null>(null);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (session?.user) {
+      const role = (session.user as any)?.role;
+      if (role === Role.ADMIN || role === Role.SUPER_ADMIN) {
+        router.push("/dashboard");
+      }
+    }
+  }, [session, router]);
 
   useEffect(() => {
     async function loadFaculties() {

@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Role } from "@prisma/client";
 import { 
   BookOpen, 
   FileText, 
@@ -18,6 +19,16 @@ export default async function DashboardPage() {
 
   if (!session) {
     redirect("/auth/signin");
+  }
+
+  // Redirect Super Admin to their dashboard
+  if (session.user.role === Role.SUPER_ADMIN) {
+    redirect("/super-admin");
+  }
+
+  // Redirect Admin to their dashboard
+  if (session.user.role === Role.ADMIN) {
+    redirect("/admin/upload");
   }
 
   if (!session.user.profileCompleted) {

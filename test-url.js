@@ -1,0 +1,1 @@
+const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); (async () => { const papers = await prisma.paper.findMany({take: 1}); console.log(papers[0]?.cloudinaryUrl); await prisma.(); })();

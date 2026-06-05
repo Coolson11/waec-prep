@@ -15,19 +15,20 @@ model User {
   image            String?
   role             Role           @default(STUDENT)
   previewCount     Int            @default(0)
-  profileCompleted Boolean        @default(false)
-  facultyId        String?
-  faculty          Faculty?       @relation(fields: [facultyId], references: [id])
-  selectedSubjects Subject[]      @relation("UserSelectedSubjects")
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   password         String?
+  facultyId        String?
+  profileCompleted Boolean        @default(false)
+  suspended        Boolean        @default(false)
   accounts         Account[]
   downloads        Download[]
   papersUploaded   Paper[]        @relation("AdminUploads")
   sessions         Session[]
   subscriptions    Subscription[]
+  faculty          Faculty?       @relation(fields: [facultyId], references: [id])
   views            View[]
+  selectedSubjects Subject[]      @relation("UserSelectedSubjects")
 }
 
 model Account {
