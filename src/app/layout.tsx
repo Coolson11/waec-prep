@@ -17,6 +17,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "WAEC Prep - Past Papers",
   description: "Centralized WAEC past paper system",
+  icons: {
+    icon: "/waecfavicon.png",
+    shortcut: "/waecfavicon.png",
+    apple: "/waecfavicon.png",
+  },
 };
 
 export default function RootLayout({
