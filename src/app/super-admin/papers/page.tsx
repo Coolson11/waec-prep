@@ -8,11 +8,19 @@ import { Loader2, Trash2 } from "lucide-react";
 export default function PapersPage() {
   const [papers, setPapers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const [modal, setModal] = useState<{isOpen: boolean, action: () => void, title: string, description: string}>({
     isOpen: false, action: () => {}, title: '', description: ''
   });
 
   useEffect(() => { loadPapers(); }, []);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   async function loadPapers() {
     setLoading(true);
@@ -31,7 +39,15 @@ export default function PapersPage() {
           isOpen: true,
           title: "Delete Paper",
           description: `Are you sure you want to delete ${p.title}?`,
-          action: async () => { await deletePaper(p.id); loadPapers(); }
+          action: async () => { 
+            try {
+              await deletePaper(p.id); 
+              setNotification({type: 'success', message: "Paper deleted"});
+              loadPapers(); 
+            } catch (err: any) {
+              setNotification({type: 'error', message: err.message || "Something went wrong"});
+            }
+          }
         })}
         className="p-2 hover:bg-rose-50 rounded-lg"
       >
@@ -44,9 +60,15 @@ export default function PapersPage() {
 
   return (
     <div className="space-y-6">
+      {notification && (
+        <div className={`p-4 rounded-xl text-white font-bold ${notification.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+          {notification.message}
+        </div>
+      )}
       <h1 className="text-2xl font-black text-slate-900">Paper Management</h1>
       <DataTable data={papers} columns={columns} />
       <ConfirmationModal {...modal} onClose={() => setModal({...modal, isOpen: false})} onConfirm={modal.action} />
     </div>
   );
 }
+

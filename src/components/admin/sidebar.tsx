@@ -34,12 +34,12 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
         />
       )}
       
-      {/* Sidebar */}
+      // Sidebar
       <aside className={clsx(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white min-h-screen p-6 transition-transform duration-300 md:relative md:translate-x-0",
+        "fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white min-h-screen p-6 transition-transform duration-300 md:translate-x-0 md:static md:inset-auto",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <h1 className="text-xl font-black mb-10 tracking-tighter text-indigo-400">SUPER ADMIN</h1>
+        <h1 className="text-xl font-black mt-16 md:mt-8 mb-10 tracking-tighter text-indigo-400">SUPER ADMIN</h1>
         <nav className="space-y-2">
           {menuItems.map((item) => (
             <Link

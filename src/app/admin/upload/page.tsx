@@ -36,7 +36,13 @@ export default function AdminUploadPage() {
     
     fetch("/api/subjects")
       .then(res => res.json())
-      .then(data => setSubjects(data))
+      .then(data => {
+        if (Array.isArray(data)) {
+          setSubjects(data);
+        } else {
+          console.error("Subjects data is not an array:", data);
+        }
+      })
       .catch(err => console.error("Failed to fetch subjects", err));
   }, [status]);
 
