@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FileText, 
@@ -30,11 +31,19 @@ interface Paper {
   examBody: string;
 }
 
-export default function PapersPage() {
+function PapersContent() {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const query = searchParams.get("q");
+    if (query) {
+      setSearchQuery(query);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     async function fetchPapers() {
@@ -215,5 +224,18 @@ export default function PapersPage() {
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+
+export default function PapersPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center space-y-4">
+        <Loader2 className="h-12 w-12 text-indigo-600 animate-spin" />
+        <p className="text-slate-500 font-black uppercase tracking-[0.2em] text-xs">Loading Papers</p>
+      </div>
+    }>
+      <PapersContent />
+    </Suspense>
   );
 }

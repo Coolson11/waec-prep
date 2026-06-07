@@ -51,7 +51,7 @@ export async function checkPreviewAccess() {
   }
 }
 
-export async function incrementPreviewCount() {
+export async function incrementPreviewCount(paperId?: string) {
   const sessionUser = await getCurrentUser();
 
   if (sessionUser) {
@@ -60,6 +60,16 @@ export async function incrementPreviewCount() {
       where: { id: sessionUser.id },
       data: { previewCount: { increment: 1 } }
     });
+
+    // Record a view if paperId is provided
+    if (paperId) {
+      await prisma.view.create({
+        data: {
+          userId: sessionUser.id,
+          paperId: paperId
+        }
+      });
+    }
   } else {
     // Increment for guests in cookies
     const cookieStore = await cookies();

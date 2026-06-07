@@ -2,6 +2,9 @@ import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Role } from "@prisma/client";
+import { getDashboardStats, getRecentActivity } from "@/lib/data";
+import { DashboardSearch } from "@/components/dashboard-search";
+import { formatDistanceToNow } from "@/lib/utils";
 import { 
   BookOpen, 
   FileText, 
@@ -11,7 +14,8 @@ import {
   TrendingUp, 
   Sparkles,
   ShieldCheck,
-  Plus
+  Plus,
+  Download
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -35,9 +39,14 @@ export default async function DashboardPage() {
     redirect("/complete-profile");
   }
 
+  const [dbStats, recentActivity] = await Promise.all([
+    getDashboardStats(),
+    getRecentActivity(session.user.id)
+  ]);
+
   const stats = [
-    { name: "Total Papers", value: "150+", icon: FileText, color: "text-blue-600", bg: "bg-blue-100" },
-    { name: "Subjects", value: "12", icon: BookOpen, color: "text-indigo-600", bg: "bg-indigo-100" },
+    { name: "Total Papers", value: dbStats.totalPapers.toString(), icon: FileText, color: "text-blue-600", bg: "bg-blue-100" },
+    { name: "Subjects", value: dbStats.totalSubjects.toString(), icon: BookOpen, color: "text-indigo-600", bg: "bg-indigo-100" },
     { name: "Prep Score", value: "85%", icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-100" },
     { name: "Study Streak", value: "5 Days", icon: Clock, color: "text-amber-600", bg: "bg-amber-100" },
   ];
@@ -93,42 +102,48 @@ export default async function DashboardPage() {
               <p className="mt-1 text-slate-500 text-sm font-medium">
                 Find exactly what you need in seconds
               </p>
-              <div className="mt-6 flex gap-3 p-1.5 bg-slate-50 rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all">
-                <input 
-                  type="text" 
-                  placeholder="e.g. Mathematics 2023 Theory..." 
-                  className="bg-transparent border-none focus:ring-0 text-sm px-4 w-full text-slate-900 placeholder-slate-400 font-medium" 
-                />
-                <button className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
-                  Search
-                </button>
-              </div>
+              <DashboardSearch />
             </div>
           </div>
 
-          {/* Activity Section Placeholder */}
+          {/* Activity Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2 ml-1">
               <Clock className="h-5 w-5 text-indigo-600" />
               Recent Activity
             </h3>
             <div className="bg-white rounded-3xl border border-slate-100 divide-y divide-slate-50 overflow-hidden shadow-sm">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors group">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                      <FileText className="h-5 w-5" />
+              {recentActivity.length > 0 ? (
+                recentActivity.map((activity) => (
+                  <Link 
+                    key={activity.id} 
+                    href={`/papers/${activity.paperId}/preview`}
+                    className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                        {activity.type === 'view' ? <FileText className="h-5 w-5" /> : <Download className="h-5 w-5" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">{activity.title}</p>
+                        <p className="text-xs font-medium text-slate-500">
+                          {activity.type === 'view' ? 'Viewed' : 'Downloaded'} {formatDistanceToNow(activity.createdAt)} ago
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900">Mathematics Paper 1 (2022)</p>
-                      <p className="text-xs font-medium text-slate-500">Viewed 2 hours ago</p>
+                    <div className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity p-2">
+                      <ArrowRight className="h-4 w-4" />
                     </div>
-                  </div>
-                  <button className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity p-2">
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
+                  </Link>
+                ))
+              ) : (
+                <div className="p-12 text-center">
+                  <p className="text-slate-400 font-medium">No recent activity yet. Start studying!</p>
+                  <Link href="/papers" className="mt-4 inline-block text-indigo-600 text-sm font-bold hover:underline">
+                    Browse Papers
+                  </Link>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

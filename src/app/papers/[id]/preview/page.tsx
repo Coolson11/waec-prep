@@ -90,7 +90,7 @@ export default async function PaperPreviewPage({ params }: { params: Promise<{ i
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-      <PreviewTracker />
+      <PreviewTracker paperId={paper.id} />
       
       {/* Header & Breadcrumbs */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
