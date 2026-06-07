@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Assuming these exist, if not, I'll use raw divs
 
 export default async function SuperAdminDashboard() {
   // Aggregate stats

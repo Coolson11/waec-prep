@@ -45,11 +45,11 @@ export default function ProfilePreferences() {
 
   useEffect(() => {
     if (selectedFaculty && !loading) {
-      async function loadSubjects() {
-        const data = await getSubjectsByFaculty(selectedFaculty);
+      async function loadSubjects(facultyId: string) {
+        const data = await getSubjectsByFaculty(facultyId);
         setSubjects(data);
       }
-      loadSubjects();
+      loadSubjects(selectedFaculty);
     }
   }, [selectedFaculty, loading]);
 

@@ -40,13 +40,13 @@ export default function CompleteProfilePage() {
 
   useEffect(() => {
     if (selectedFaculty) {
-      async function loadSubjects() {
+      async function loadSubjects(facultyId: string) {
         setLoading(true);
-        const data = await getSubjectsByFaculty(selectedFaculty);
+        const data = await getSubjectsByFaculty(facultyId);
         setSubjects(data);
         setLoading(false);
       }
-      loadSubjects();
+      loadSubjects(selectedFaculty);
     }
   }, [selectedFaculty]);
 

@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { checkPreviewAccess } from "@/lib/actions/preview";
 import Link from "next/link";
+import Image from "next/image";
 import { PreviewTracker } from "@/components/providers/preview-tracker";
 import { 
   ArrowLeft, 
@@ -139,9 +140,11 @@ export default async function PaperPreviewPage({ params }: { params: Promise<{ i
           <div className="bg-slate-900 rounded-[3rem] shadow-2xl overflow-hidden border-[12px] border-slate-800 h-[50vh] lg:h-[900px] relative flex items-center justify-center">
             {isImagePreview ? (
               <div className="w-full h-full overflow-y-auto bg-slate-100 p-8 custom-scrollbar">
-                <img 
+                <Image 
                   src={displayUrl} 
                   alt={`${paper.title} - First Page Preview`} 
+                  width={800}
+                  height={1000}
                   className="w-full max-w-3xl mx-auto shadow-2xl rounded-sm"
                 />
                 <div className="absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-slate-900 via-slate-900/95 to-transparent flex flex-col items-center justify-end pb-16 px-6 text-center">
