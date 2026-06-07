@@ -12,7 +12,13 @@ export async function getFaculties() {
 
 export async function getSubjectsByFaculty(facultyId: string) {
   return await prisma.subject.findMany({
-    where: { facultyId },
+    where: {
+      faculties: {
+        some: {
+          id: facultyId,
+        },
+      },
+    },
     orderBy: { name: "asc" },
   });
 }

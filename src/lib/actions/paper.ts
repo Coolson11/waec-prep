@@ -13,6 +13,18 @@ export async function uploadPaper(formData: FormData) {
     throw new Error("You must be logged in to upload papers.");
   }
 
+  // 1. Pre-upload Validations & DB Lookups
+  const title = formData.get("title") as string;
+  const subjectId = formData.get("subjectId") as string;
+  const yearInput = formData.get("year");
+  const year = yearInput ? parseInt(yearInput as string) : NaN;
+  const paperType = formData.get("paperType") as string;
+  const file = formData.get("file") as File;
+
+  if (!title || !subjectId || isNaN(year) || !paperType || !file) {
+    throw new Error("Missing required fields. Please ensure title, subject, year, paper type, and file are provided.");
+  }
+
   // Verify user exists in DB and has permission
   const user = await prisma.user.findUnique({
     where: { id: sessionUser.id }
@@ -22,54 +34,67 @@ export async function uploadPaper(formData: FormData) {
     throw new Error("Unauthorized: Only admins can upload papers.");
   }
 
-  const title = formData.get("title") as string;
-  const subjectId = formData.get("subjectId") as string;
-  const year = parseInt(formData.get("year") as string);
-  const paperType = formData.get("paperType") as string;
-  const file = formData.get("file") as File;
-
-  if (!file) {
-    throw new Error("No file provided");
-  }
-
-  // Convert File to base64 for Cloudinary
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const fileBase64 = `data:${file.type};base64,${buffer.toString("base64")}`;
-
-  const uploadResult = await uploadToCloudinary(fileBase64);
-
-  // Validate the result
-  if (!uploadResult.secure_url || !uploadResult.secure_url.startsWith("https://")) {
-    throw new Error("Invalid URL returned from Cloudinary upload.");
-  }
-
-  // Generate a paper code (e.g., MATH-2023-P1-1234)
   const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
-
   if (!subject) {
-    throw new Error("Invalid subject selected.");
+    throw new Error("Invalid subject selected. Please refresh and try again.");
   }
 
-  const shortSubject = subject.name.substring(0, 3).toUpperCase();
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  const paperCode = `${shortSubject}-${year}-${paperType.substring(0, 2).toUpperCase()}-${randomSuffix}`;
+  // 2. Prepare File & Cloudinary Upload
+  let uploadResult;
+  try {
+    // Convert File to base64 for Cloudinary
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const fileBase64 = `data:${file.type};base64,${buffer.toString("base64")}`;
 
-  const paper = await prisma.paper.create({
-    data: {
-      title,
-      subjectId,
-      year,
-      paperType,
-      cloudinaryUrl: uploadResult.secure_url,
-      paperCode,
-      uploaderId: user.id,
-      status: PaperStatus.PUBLISHED, // Auto-publishing for now as per MVP simplicity
+    uploadResult = await uploadToCloudinary(fileBase64);
+
+    // Validate the result
+    if (!uploadResult || !uploadResult.secure_url || !uploadResult.secure_url.startsWith("https://")) {
+      throw new Error("Invalid response from Cloudinary. Upload might have failed.");
     }
-  });
+  } catch (cloudinaryError: any) {
+    console.error("CLOUDINARY_UPLOAD_ERROR:", cloudinaryError);
+    throw new Error(`Cloudinary upload failed: ${cloudinaryError.message || "Unknown error"}`);
+  }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/subjects");
-  
-  return paper;
+  // 3. Database Save
+  // Generate a more unique paper code to prevent collisions
+  // Format: SUBJ-YEAR-TYPE-RANDOM (e.g., MAT-2023-P1-X7K2B)
+  const shortSubject = subject.name.substring(0, 3).toUpperCase();
+  const typeCode = paperType.replace(/\s+/g, "").substring(0, 2).toUpperCase();
+  const randomStr = Math.random().toString(36).substring(2, 7).toUpperCase();
+  const paperCode = `${shortSubject}-${year}-${typeCode}-${randomStr}`;
+
+  try {
+    const paper = await prisma.paper.create({
+      data: {
+        title,
+        subjectId,
+        year,
+        paperType,
+        cloudinaryUrl: uploadResult.secure_url,
+        paperCode,
+        uploaderId: user.id,
+        status: PaperStatus.PUBLISHED,
+      }
+    });
+
+    console.log(`Successfully saved paper to DB: ${paper.id} (${paperCode})`);
+
+    revalidatePath("/dashboard");
+    revalidatePath("/subjects");
+    
+    return { success: true, paper };
+  } catch (dbError: any) {
+    console.error("DATABASE_SAVE_FAILURE:", {
+      error: dbError,
+      message: dbError.message,
+      paperData: { title, subjectId, year, paperType, paperCode, uploaderId: user.id }
+    });
+    
+    // Note: The file remains in Cloudinary. 
+    // We throw a clear message so the UI can inform the user.
+    throw new Error(`Cloudinary upload succeeded, but database save failed: ${dbError.message}`);
+  }
 }

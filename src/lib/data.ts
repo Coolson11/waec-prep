@@ -11,7 +11,7 @@ export async function getFaculties() {
 export async function getSubjects() {
   return await prisma.subject.findMany({
     include: {
-      faculty: true,
+      faculties: true,
     },
   });
 }

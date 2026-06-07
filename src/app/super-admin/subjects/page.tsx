@@ -36,10 +36,17 @@ export default function SubjectsPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const facultyIds = formData.getAll("facultyIds") as string[];
+    
+    if (facultyIds.length === 0) {
+      setNotification({type: 'error', message: "Please select at least one faculty"});
+      return;
+    }
+
     const data = {
       name: formData.get("name") as string,
       code: formData.get("code") as string,
-      facultyId: formData.get("facultyId") as string,
+      facultyIds: facultyIds,
     };
 
     try {
@@ -61,7 +68,15 @@ export default function SubjectsPage() {
   const columns = [
     { header: "Name", accessor: "name" },
     { header: "Code", accessor: "code" },
-    { header: "Faculty", accessor: "faculty", render: (s: any) => s.faculty.name },
+    { header: "Faculties", accessor: "faculties", render: (s: any) => (
+      <div className="flex flex-wrap gap-1">
+        {s.faculties.map((f: any) => (
+          <span key={f.id} className="px-2 py-0.5 bg-slate-100 text-[10px] font-bold rounded-md">
+            {f.name}
+          </span>
+        ))}
+      </div>
+    )},
     { header: "Actions", accessor: "id", render: (s: any) => (
       <div className="flex gap-2">
         <button
@@ -113,17 +128,43 @@ export default function SubjectsPage() {
       
       {isFormOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl w-full max-w-md space-y-4">
-            <h2 className="text-lg font-black">{editingSubject ? "Edit" : "Add"} Subject</h2>
-            <input name="name" defaultValue={editingSubject?.name} placeholder="Name" className="w-full p-3 border rounded-xl" required />
-            <input name="code" defaultValue={editingSubject?.code} placeholder="Code" className="w-full p-3 border rounded-xl" required />
-            <select name="facultyId" defaultValue={editingSubject?.facultyId} className="w-full p-3 border rounded-xl" required>
-              <option value="">Select Faculty</option>
-              {faculties.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-            </select>
-            <div className="flex gap-2">
-              <button type="submit" className="flex-1 bg-indigo-600 text-white p-3 rounded-xl font-bold">Save</button>
-              <button type="button" onClick={() => setIsFormOpen(false)} className="flex-1 bg-slate-100 p-3 rounded-xl font-bold">Cancel</button>
+          <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-lg font-black">{editingSubject ? "Edit" : "Add"} Subject</h2>
+              <button type="button" onClick={() => setIsFormOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Subject Name</label>
+              <input name="name" defaultValue={editingSubject?.name} placeholder="Name (e.g. Mathematics)" className="w-full p-3 border rounded-xl" required />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Subject Code</label>
+              <input name="code" defaultValue={editingSubject?.code} placeholder="Code (e.g. SUBJ001)" className="w-full p-3 border rounded-xl" required />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Assign to Faculties</label>
+              <div className="grid grid-cols-2 gap-2 p-3 border rounded-xl bg-slate-50">
+                {faculties.map(f => (
+                  <label key={f.id} className="flex items-center gap-2 p-2 hover:bg-white rounded-lg cursor-pointer transition-colors">
+                    <input 
+                      type="checkbox" 
+                      name="facultyIds" 
+                      value={f.id} 
+                      defaultChecked={editingSubject?.faculties?.some((sf: any) => sf.id === f.id)}
+                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm font-bold text-slate-700">{f.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button type="submit" className="flex-1 bg-indigo-600 text-white p-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors">Save Subject</button>
+              <button type="button" onClick={() => setIsFormOpen(false)} className="flex-1 bg-slate-100 p-3 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancel</button>
             </div>
           </form>
         </div>

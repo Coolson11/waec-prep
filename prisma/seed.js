@@ -4,55 +4,59 @@ const prisma = new PrismaClient();
 
 async function main() {
   // Seeding Faculties and Subjects
-  const faculties = [
-    {
-      name: 'Science',
-      subjects: [
-        'Mathematics', 'English Language', 'Biology', 'Chemistry', 'Physics',
-        'Further Mathematics', 'Agricultural Science', 'Geography', 'Technical Drawing',
-        'Computer Studies', 'Data Processing', 'Animal Husbandry', 'Health Science'
-      ]
-    },
-    {
-      name: 'Art',
-      subjects: [
-        'Literature in English', 'Government', 'History', 'CRS', 'IRS',
-        'French', 'Music', 'Visual Arts', 'Yoruba', 'Civic Education',
-        'Economics', 'Social Studies', 'Dyeing & Bleaching'
-      ]
-    },
-    {
-      name: 'Commercial',
-      subjects: [
-        'Financial Accounting', 'Commerce', 'Office Practice', 'Insurance',
-        'Store Management', 'Marketing', 'Typewriting', 'Shorthand',
-        'Business Management', 'Book Keeping', 'Salesmanship', 'Auto Mechanics', 'Building Construction'
-      ]
-    }
+  const facultyNames = ['Science', 'Art', 'Commercial'];
+  const facultyMap = {};
+
+  for (const name of facultyNames) {
+    const faculty = await prisma.faculty.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+    facultyMap[name] = faculty.id;
+  }
+
+  const subjects = [
+    // Shared subjects
+    { name: 'Mathematics', code: 'SUBJ001', facultyNames: ['Science', 'Art', 'Commercial'] },
+    { name: 'English Language', code: 'SUBJ002', facultyNames: ['Science', 'Art', 'Commercial'] },
+    { name: 'Civic Education', code: 'SUBJ003', facultyNames: ['Science', 'Art', 'Commercial'] },
+    
+    // Science subjects
+    { name: 'Biology', code: 'SUBJ004', facultyNames: ['Science'] },
+    { name: 'Chemistry', code: 'SUBJ005', facultyNames: ['Science'] },
+    { name: 'Physics', code: 'SUBJ006', facultyNames: ['Science'] },
+    { name: 'Further Mathematics', code: 'SUBJ007', facultyNames: ['Science'] },
+    
+    // Art subjects
+    { name: 'Literature in English', code: 'SUBJ008', facultyNames: ['Art'] },
+    { name: 'Government', code: 'SUBJ009', facultyNames: ['Art'] },
+    { name: 'History', code: 'SUBJ010', facultyNames: ['Art'] },
+    { name: 'CRS', code: 'SUBJ011', facultyNames: ['Art'] },
+    
+    // Commercial subjects
+    { name: 'Financial Accounting', code: 'SUBJ012', facultyNames: ['Commercial'] },
+    { name: 'Commerce', code: 'SUBJ013', facultyNames: ['Commercial'] },
+    { name: 'Economics', code: 'SUBJ014', facultyNames: ['Commercial', 'Art'] },
   ];
 
-  let subjectCount = 1;
-
-  for (const f of faculties) {
-    const faculty = await prisma.faculty.upsert({
-      where: { name: f.name },
-      update: {},
-      create: { name: f.name },
+  for (const s of subjects) {
+    await prisma.subject.upsert({
+      where: { code: s.code },
+      update: { 
+        name: s.name,
+        faculties: {
+          set: s.facultyNames.map(fname => ({ id: facultyMap[fname] }))
+        }
+      },
+      create: {
+        name: s.name,
+        code: s.code,
+        faculties: {
+          connect: s.facultyNames.map(fname => ({ id: facultyMap[fname] }))
+        }
+      },
     });
-
-    for (const s of f.subjects) {
-      const code = `SUBJ${String(subjectCount).padStart(3, '0')}`;
-      await prisma.subject.upsert({
-        where: { code: code },
-        update: { name: s, facultyId: faculty.id },
-        create: {
-          name: s,
-          code: code,
-          facultyId: faculty.id,
-        },
-      });
-      subjectCount++;
-    }
   }
 
   // Seeding Super Admin and Admin

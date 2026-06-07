@@ -177,21 +177,37 @@ export async function getSubjects() {
   await verifySuperAdmin();
   return await prisma.subject.findMany({
     orderBy: { code: "asc" },
-    include: { faculty: true }
+    include: { faculties: true }
   });
 }
 
-export async function createSubject(data: { name: string; code: string; facultyId: string }) {
+export async function createSubject(data: { name: string; code: string; facultyIds: string[] }) {
   await verifySuperAdmin();
-  await prisma.subject.create({ data });
+  const { name, code, facultyIds } = data;
+  await prisma.subject.create({
+    data: {
+      name,
+      code,
+      faculties: {
+        connect: facultyIds.map(id => ({ id }))
+      }
+    }
+  });
   revalidatePath("/super-admin/subjects");
 }
 
-export async function updateSubject(id: string, data: { name: string; code: string; facultyId: string }) {
+export async function updateSubject(id: string, data: { name: string; code: string; facultyIds: string[] }) {
   await verifySuperAdmin();
+  const { name, code, facultyIds } = data;
   await prisma.subject.update({
     where: { id },
-    data
+    data: {
+      name,
+      code,
+      faculties: {
+        set: facultyIds.map(id => ({ id }))
+      }
+    }
   });
   revalidatePath("/super-admin/subjects");
 }

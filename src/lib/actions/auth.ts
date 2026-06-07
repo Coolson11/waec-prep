@@ -2,8 +2,18 @@
 
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { headers } from "next/headers";
+import { ratelimit } from "@/lib/ratelimit";
 
 export async function signUp(formData: FormData) {
+  const forwarded = (await headers()).get("x-forwarded-for");
+  const ip = forwarded ? forwarded.split(",")[0] : "127.0.0.1";
+  
+  const { success } = await ratelimit.auth.limit(ip);
+  if (!success) {
+    return { error: "Too many requests. Please try again later." };
+  }
+
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
